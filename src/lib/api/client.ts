@@ -6,10 +6,12 @@ const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: true, // Important for CORS with credentials
 });
 
-// Request interceptor for adding auth token
+// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -25,7 +27,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling errors
+// Response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
@@ -33,9 +35,18 @@ apiClient.interceptors.response.use(
       if (typeof window !== 'undefined') {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Only redirect if not already on login page
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       }
     }
+    
+    // Log CORS errors for debugging
+    if (error.message === 'Network Error') {
+      console.error('CORS or Network Error:', error);
+    }
+    
     return Promise.reject(error);
   }
 );
